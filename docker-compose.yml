@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: overwatch_html_root_app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/overwatch}
+      JWT_SECRET: ${JWT_SECRET:-replace-with-32-char-minimum-secret-value-1234}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-12h}
+      AUTH_COOKIE_SECURE: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: overwatch_html_root_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: overwatch
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d overwatch"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

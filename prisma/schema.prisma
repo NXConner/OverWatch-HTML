@@ -1,0 +1,217 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("operator")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  cases         Case[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+model Case {
+  id          String   @id @default(cuid())
+  caseNumber  String   @unique
+  title       String
+  description String?  @db.Text
+  status      String   @default("open")
+  priority    String   @default("medium")
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  subjects    SubjectBaselineProfile[]
+  events      UnifiedForensicEvent[]
+  notes       CaseNote[]
+  reports     IntelligenceReport[]
+}
+
+model SubjectBaselineProfile {
+  id          String   @id @default(cuid())
+  name        String
+  alias       String?
+  description String?  @db.Text
+  metadata    String?  @db.Text
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  tags        SubjectTag[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UnifiedForensicEvent {
+  id          String   @id @default(cuid())
+  eventType   String
+  source      String
+  content     String?  @db.Text
+  metadata    String?  @db.Text
+  severity    String   @default("info")
+  timestamp   DateTime @default(now())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  tags        EventTag[]
+
+  @@index([caseId, severity])
+  @@index([caseId, timestamp])
+  @@index([severity])
+  @@index([timestamp])
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  userEmail  String?
+  action     String
+  entity     String
+  entityId   String?
+  metadata   String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model CaseNote {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  userId    String
+  userEmail String?
+  userName  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId, createdAt])
+}
+
+model IntelligenceReport {
+  id               String   @id @default(cuid())
+  caseId           String
+  case             Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  analysisType     String
+  content          String   @db.Text
+  contextInjection String?  @db.Text
+  userId           String?
+  userEmail        String?
+  createdAt        DateTime @default(now())
+
+  @@index([caseId, createdAt])
+}
+
+model IngestedFile {
+  id        String   @id @default(cuid())
+  fileName  String
+  fileHash  String
+  caseId    String
+  source    String?
+  eventCount Int     @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([fileHash, caseId])
+  @@index([caseId])
+}
+
+model Tag {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  color     String      @default("#f97316")
+  createdAt DateTime    @default(now())
+  events    EventTag[]
+  subjects  SubjectTag[]
+}
+
+model EventTag {
+  id       String @id @default(cuid())
+  eventId  String
+  tagId    String
+  event    UnifiedForensicEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tag      Tag                  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, tagId])
+  @@index([tagId])
+}
+
+model SubjectTag {
+  id        String @id @default(cuid())
+  subjectId String
+  tagId     String
+  subject   SubjectBaselineProfile @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  tag       Tag                    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, tagId])
+  @@index([tagId])
+}
+
+model IOCEntry {
+  id             String   @id @default(cuid())
+  type           String
+  value          String
+  caseId         String
+  sourceReportId String?
+  confidence     Float    @default(0.5)
+  firstSeen      DateTime @default(now())
+  lastSeen       DateTime @default(now())
+  crossRefCount  Int      @default(0)
+
+  @@unique([type, value, caseId])
+  @@index([caseId])
+  @@index([type, value])
+}
