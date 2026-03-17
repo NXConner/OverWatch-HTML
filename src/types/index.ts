@@ -13,7 +13,7 @@ export type EventPlatform =
   | 'pornhub' | 'onlyfans' | 'reddit'
   | 'venmo' | 'cashapp' | 'zelle'
   | 'tinder' | 'bumble' | 'hinge'
-  | 'unknown';
+  | 'uber' | 'unknown';
 
 export interface ForensicEvent {
   id: string;
@@ -22,7 +22,7 @@ export interface ForensicEvent {
   category: ThreatCategory;
   title: string;
   description: string;
-  intensity: number; // 0-100
+  intensity: number;
   coordinates?: { lat: number; lng: number };
   metadata?: Record<string, string>;
   flagged: boolean;
@@ -35,14 +35,14 @@ export interface SubjectProfile {
   avatarUrl?: string;
   age?: number;
   baselineMetrics: {
-    avgDailyScreenTime: number; // minutes
-    peakActivityHour: number; // 0-23
+    avgDailyScreenTime: number;
+    peakActivityHour: number;
     primaryPlatforms: EventPlatform[];
-    circadianDeviation: number; // percentage
-    socialMediaFrequency: number; // posts per day
+    circadianDeviation: number;
+    socialMediaFrequency: number;
   };
   sourceDistribution: Record<EventPlatform, number>;
-  riskScore: number; // 0-100
+  riskScore: number;
 }
 
 export interface GottmanScores {
@@ -50,17 +50,17 @@ export interface GottmanScores {
   contempt: number;
   defensiveness: number;
   stonewalling: number;
-  magicRatio: number; // positive:negative ratio (healthy > 5:1)
+  magicRatio: number;
 }
 
 export interface AnalysisResults {
   gottman: GottmanScores;
-  recidivismScore: number; // 0-100
-  deceptionIndex: number; // 0-100
+  recidivismScore: number;
+  deceptionIndex: number;
   sentimentTimeline: { date: string; score: number }[];
   socialPerformance: {
-    public: number; // 0-100
-    private: number; // 0-100
+    public: number;
+    private: number;
     delta: number;
   };
   targetFixation: {

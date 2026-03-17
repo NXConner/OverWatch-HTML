@@ -1,28 +1,44 @@
-import { ScorchedCard } from '@/components/design-system';
-import { User, Shield, Activity } from 'lucide-react';
+import { useState } from 'react';
+import { ScorchedCard, MagmaButton } from '@/components/design-system';
+import { User, Shield, Activity, ChevronDown, ChevronRight, Clock, Users, Crosshair, Heart } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 
 export const LeftSidebar = () => {
   const subject = useStore((s) => s.subject);
+  const analysis = useStore((s) => s.analysis);
 
   return (
     <aside className="h-full overflow-y-auto border-r border-border bg-card p-3 flex flex-col gap-3">
       {/* Subject Profile */}
       <ScorchedCard glow>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 border border-primary bg-primary/10 flex items-center justify-center"
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-10 h-10 border border-primary bg-primary/10 flex items-center justify-center"
                style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
-            <User size={14} className="text-primary" />
+            <User size={16} className="text-primary" />
           </div>
           <div>
             <div className="text-[11px] font-mono font-bold text-foreground">
               {subject?.codename ?? 'SUBJECT_NULL'}
             </div>
             <div className="text-[9px] font-mono text-muted-foreground">
-              RISK: {subject?.riskScore ?? '--'}%
+              AGE: {subject?.age ?? '--'} • RISK: <span className="text-destructive">{subject?.riskScore ?? '--'}%</span>
             </div>
           </div>
         </div>
+        {/* Source distribution mini bars */}
+        {subject && (
+          <div className="space-y-1">
+            {subject.baselineMetrics.primaryPlatforms.slice(0, 4).map((p) => (
+              <div key={p} className="flex items-center gap-2">
+                <span className="text-[8px] font-mono text-muted-foreground w-16 text-right uppercase">{p}</span>
+                <div className="flex-1 h-1.5 bg-secondary">
+                  <div className="h-full bg-primary/60 transition-all" style={{ width: `${Math.min((subject.sourceDistribution[p] || 0) / 2, 100)}%` }} />
+                </div>
+                <span className="text-[8px] font-mono text-muted-foreground w-6">{subject.sourceDistribution[p] || 0}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </ScorchedCard>
 
       {/* Threat Categories */}
@@ -46,18 +62,94 @@ export const LeftSidebar = () => {
         </div>
       </ScorchedCard>
 
-      {/* Placeholder for context injection */}
-      <ScorchedCard>
-        <div className="text-[9px] font-mono text-muted-foreground tracking-widest">
-          ◆ CONTEXT INJECTION
+      {/* Context Injection Accordions */}
+      <ContextAccordion icon={Clock} title="TEMPORAL ANCHORS">
+        <div className="space-y-1.5 text-[9px] font-mono">
+          <ContextItem label="D-DAY" value="2024-03-15" sub="Initial discovery event" />
+          <ContextItem label="RELATIONSHIP START" value="2021-06-12" sub="Baseline period begins" />
+          <ContextItem label="BEHAVIORAL SHIFT" value="2024-01-08" sub="Circadian pattern change detected" />
         </div>
-        <div className="text-[10px] font-mono text-ash mt-1">
-          Temporal anchors, entities, targets...
+      </ContextAccordion>
+
+      <ContextAccordion icon={Users} title="KNOWN ENTITIES">
+        <div className="space-y-1.5 text-[9px] font-mono">
+          <EntityItem name="CONTACT_ECHO" rel="Unknown" risk="A" />
+          <EntityItem name="PARTNER" rel="Spouse" risk="E" />
+          <EntityItem name="CONTACT_PHANTOM" rel="Unknown" risk="A" />
+          <EntityItem name="UNKNOWN_7" rel="Unidentified" risk="B" />
+        </div>
+      </ContextAccordion>
+
+      <ContextAccordion icon={Crosshair} title="EXTERNAL TARGETS">
+        <div className="space-y-1.5 text-[9px] font-mono">
+          <TargetItem name="ENTITY_ECHO" platform="Instagram" notes="89 mentions, 47 contact attempts" />
+          <TargetItem name="TINDER_MATCH_3" platform="Tinder" notes="12 interactions, active profile" />
+        </div>
+      </ContextAccordion>
+
+      <ContextAccordion icon={Heart} title="RELATIONAL BASELINE">
+        <div className="space-y-1.5 text-[9px] font-mono">
+          <MetricRow label="MAGIC RATIO" value={analysis ? `${analysis.gottman.magicRatio}:1` : '--'} />
+          <MetricRow label="PUB/PRIV DELTA" value={analysis ? `${analysis.socialPerformance.delta}%` : '--'} />
+          <MetricRow label="DECEPTION IDX" value={analysis ? `${analysis.deceptionIndex}%` : '--'} />
+          <MetricRow label="RECIDIVISM" value={analysis ? `${analysis.recidivismScore}%` : '--'} />
+        </div>
+      </ContextAccordion>
+
+      {/* Quick Actions */}
+      <ScorchedCard>
+        <div className="text-[9px] font-mono text-muted-foreground tracking-widest mb-2">◆ QUICK ACTIONS</div>
+        <div className="flex flex-col gap-1">
+          <MagmaButton size="sm" variant="primary">GENERATE REPORT</MagmaButton>
+          <MagmaButton size="sm" variant="secondary">INGEST DATA</MagmaButton>
+          <MagmaButton size="sm" variant="danger">EXECUTE CORRELATION</MagmaButton>
         </div>
       </ScorchedCard>
     </aside>
   );
 };
+
+const ContextAccordion = ({ icon: Icon, title, children }: { icon: typeof Clock; title: string; children: React.ReactNode }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <ScorchedCard className="p-0">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-3 hover:bg-secondary/30 transition-colors">
+        <div className="flex items-center gap-1 text-[9px] font-mono text-muted-foreground tracking-widest">
+          <Icon size={10} /> {title}
+        </div>
+        {open ? <ChevronDown size={10} className="text-muted-foreground" /> : <ChevronRight size={10} className="text-muted-foreground" />}
+      </button>
+      {open && <div className="px-3 pb-3">{children}</div>}
+    </ScorchedCard>
+  );
+};
+
+const ContextItem = ({ label, value, sub }: { label: string; value: string; sub: string }) => (
+  <div className="border-l-2 border-primary/30 pl-2">
+    <div className="flex justify-between">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-foreground">{value}</span>
+    </div>
+    <div className="text-ash text-[8px]">{sub}</div>
+  </div>
+);
+
+const EntityItem = ({ name, rel, risk }: { name: string; rel: string; risk: string }) => (
+  <div className="flex items-center justify-between">
+    <div>
+      <span className="text-foreground">{name}</span>
+      <span className="text-ash ml-1">({rel})</span>
+    </div>
+    <span className={`text-threat-${risk.toLowerCase()} font-bold`}>CAT-{risk}</span>
+  </div>
+);
+
+const TargetItem = ({ name, platform, notes }: { name: string; platform: string; notes: string }) => (
+  <div className="border-l-2 border-destructive/30 pl-2">
+    <div className="text-foreground">{name} <span className="text-muted-foreground">via {platform}</span></div>
+    <div className="text-ash text-[8px]">{notes}</div>
+  </div>
+);
 
 const ThreatToggles = () => {
   const { activeThreatFilters, toggleThreatFilter } = useStore();
