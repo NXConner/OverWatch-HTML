@@ -80,6 +80,7 @@
     "react-router-dom": "6.26.2",
     "sonner": "1.7.1",
     "tailwind-merge": "2.6.0",
+    "tailwindcss-animate": "^1.0.7",
     "three": "0.160.0",
     "vaul": "1.1.2",
     "vite": "5.4.11",
