@@ -31,5 +31,15 @@
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "src/app.ts",
+    "src/server.ts",
+    "src/auth",
+    "src/config",
+    "src/middleware",
+    "src/routes",
+    "src/services",
+    "src/api"
   ]
 }
