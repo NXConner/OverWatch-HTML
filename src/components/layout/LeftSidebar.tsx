@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { ScorchedCard, MagmaButton } from '@/components/design-system';
 import { User, Shield, Activity, ChevronDown, ChevronRight, Clock, Users, Crosshair, Heart } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { IngestionModal, ReportExportPanel, AlibiBreakerPanel } from '@/components/forensic';
 
 export const LeftSidebar = () => {
   const subject = useStore((s) => s.subject);
   const analysis = useStore((s) => s.analysis);
+  const [ingestOpen, setIngestOpen] = useState(false);
 
   return (
     <aside className="h-full overflow-y-auto border-r border-border bg-card p-3 flex flex-col gap-3">
+      <IngestionModal open={ingestOpen} onClose={() => setIngestOpen(false)} />
       {/* Subject Profile */}
       <ScorchedCard glow>
         <div className="flex items-center gap-2 mb-3">
@@ -96,12 +99,17 @@ export const LeftSidebar = () => {
         </div>
       </ContextAccordion>
 
+      {/* Alibi Breaker — temporal/geospatial conflict detector */}
+      <AlibiBreakerPanel />
+
+      {/* Step 4: Forensic export */}
+      <ReportExportPanel />
+
       {/* Quick Actions */}
       <ScorchedCard>
         <div className="text-[9px] font-mono text-muted-foreground tracking-widest mb-2">◆ QUICK ACTIONS</div>
         <div className="flex flex-col gap-1">
-          <MagmaButton size="sm" variant="primary">GENERATE REPORT</MagmaButton>
-          <MagmaButton size="sm" variant="secondary">INGEST DATA</MagmaButton>
+          <MagmaButton size="sm" variant="secondary" onClick={() => setIngestOpen(true)}>INGEST EVIDENCE</MagmaButton>
           <MagmaButton size="sm" variant="danger">EXECUTE CORRELATION</MagmaButton>
         </div>
       </ScorchedCard>
