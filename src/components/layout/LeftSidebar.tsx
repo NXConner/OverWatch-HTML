@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ScorchedCard, MagmaButton } from '@/components/design-system';
 import { User, Shield, Activity, ChevronDown, ChevronRight, Clock, Users, Crosshair, Heart } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { IngestionModal, ReportExportPanel, AlibiBreakerPanel } from '@/components/forensic';
 
 export const LeftSidebar = () => {
   const subject = useStore((s) => s.subject);
